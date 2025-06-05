@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Master 5.2 - Generador de Prompts</title>
+  <!-- Tailwind CSS vía CDN -->
+  <script src="https://cdn.tailwindcss.com"></script> 
+  <!-- Font Awesome para íconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"> 
+  <style>
+    /* Estilos existentes */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0);
+    }
+    body {
+      background: linear-gradient(135deg, #e2e8f0 0%, #f3f4f6 100%);
+    }
+    .dark-mode {
+      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+      color: #e2e8f0;
+    }
+    .dark-mode h1, .dark-mode h2 {
+      color: #e2e8f0;
+    }
+    .dark-mode form, .dark-mode .preview, .dark-mode .history {
+      background-color: #2d3748;
+      border-color: #4a5568;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .dark-mode button {
+      background-color: #4a5568;
+    }
+    .dark-mode button:hover {
+      background-color: #718096;
+    }
+    .dark-mode input, .dark-mode select, .dark-mode textarea {
+      background-color: #4a5568;
+      color: #e2e8f0;
+      border-color: #718096;
+    }
+    form, .preview, .history {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen transition-colors duration-300">
+  <header class="bg-blue-600 text-white p-6 text-center">
+    <h1 class="text-3xl font-bold">Prompt Master 5.2</h1>
+    <p class="text-lg">Generador de Prompts Asistido con Evaluación Básica</p>
+    <p id="fecha-header" class="text-sm mt-2">
+      <i class="fa-solid fa-calendar-day mr-1"></i><span id="fecha"></span>
+      <i class="fa-solid fa-clock ml-4 mr-1"></i><span id="hora"></span>
+    </p>
+    <button id="toggle-modo" class="mt-4 bg-blue-800 hover:bg-blue-900 text-white px-4 py-2 rounded-full transition">Activar Modo Oscuro</button>
+  </header>
+  <main class="container mx-auto p-6">
+    <form id="prompt-form" class="bg-white p-6 rounded-lg mb-6 border border-gray-200" aria-label="Formulario para generar prompts">
+      <section class="mb-6">
+        <h2 class="text-xl font-semibold mb-4">Configuración Básica</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="modelo-ia" class="block text-sm font-medium text-gray-700">Modelo de IA</label>
+            <select id="modelo-ia" name="modelo-ia" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+              <option value="Grok">Grok (xAI)</option>
+              <option value="Copilot">Copilot (GitHub)</option>
+              <option value="DeepSeek">DeepSeek</option>
+              <option value="Qwen">Qwen</option>
+              <option value="ChatGPT">ChatGPT</option>
+              <option value="Gemini">Gemini</option>
+            </select>
+          </div>
+          <div>
+            <label for="tono-estilo" class="block text-sm font-medium text-gray-700" data-tooltip="Define el tono del prompt: formal, informal, técnico, etc.">Tono y Estilo</label>
+            <select id="tono-estilo" name="tono-estilo" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+              <option value="Neutral">Neutral</option>
+              <option value="Formal">Formal</option>
+              <option value="Informal">Informal</option>
+              <option value="Académico">Académico</option>
+              <option value="Técnico">Técnico</option>
+              <option value="Creativo">Creativo</option>
+              <option value="Persuasivo">Persuasivo</option>
+              <option value="Amigable">Amigable</option>
+              <option value="Humorístico">Humorístico</option>
+              <option value="Conciso">Conciso</option>
+              <option value="Detallado">Detallado</option>
+            </select>
+          </div>
+          <div>
+            <label for="formato-salida" class="block text-sm font-medium text-gray-700" data-tooltip="Selecciona el formato deseado para la salida del modelo.">Formato de Salida</label>
+            <select id="formato-salida" name="formato-salida" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+              <option value="Texto Plano">Texto Plano</option>
+              <option value="Lista con Viñetas">Lista con Viñetas</option>
+              <option value="Lista Numerada">Lista Numerada</option>
+              <option value="Tabla (Markdown)">Tabla (Markdown)</option>
+              <option value="JSON">JSON</option>
+              <option value="XML">XML</option>
+              <option value="Bloque de Código">Bloque de Código</option>
+              <option value="Formato Email">Formato Email</option>
+              <option value="Artículo de Blog">Artículo de Blog</option>
+              <option value="Resumen en Puntos Clave">Resumen en Puntos Clave</option>
+              <option value="Guion para Video">Guion para Video</option>
+              <option value="Documento Estructurado">Documento Estructurado</option>
+              <option value="Otro">Otro (describir en Tarea)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+      <section class="mb-6">
+        <h2 class="text-xl font-semibold mb-4">Detalles del Prompt</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="rol-contexto" class="block text-sm font-medium text-gray-700">Rol y Contexto de la IA</label>
+            <textarea id="rol-contexto" name="rol-contexto" rows="4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Define quién es la IA (ej: 'Chef experto') y la situación" required></textarea>
+          </div>
+          <div>
+            <label for="tarea-objetivo" class="block text-sm font-medium text-gray-700">Tarea Específica y Objetivo</label>
+            <textarea id="tarea-objetivo" name="tarea-objetivo" rows="4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Qué quieres que haga la IA (ej: Analiza, Genera)" required></textarea>
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="parametros-modelo" class="block text-sm font-medium text-gray-700">Parámetros Específicos del Modelo (Opcional)</label>
+          <textarea id="parametros-modelo" name="parametros-modelo" rows="2" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Ej: Temperatura=0.7, Max_tokens=500"></textarea>
+        </div>
+      </section>
+      <section class="mb-6">
+        <h2 class="text-xl font-semibold mb-4">Parámetros Avanzados</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="ejemplos" class="block text-sm font-medium text-gray-700">Ejemplos (Few-Shot)</label>
+            <textarea id="ejemplos" name="ejemplos" rows="4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Proporciona 1-3 ejemplos de ENTRADA -> SALIDA"></textarea>
+            <select id="cargar-ejemplo" class="mt-2 block w-full p-2 border border-gray-300 rounded-md">
+              <option value="">-- Cargar Ejemplo Rápido --</option>
+              <option value="email-bienvenida">Email de Bienvenida</option>
+              <option value="resumen-articulo">Resumen de Artículo</option>
+              <option value="explicacion-tecnica">Explicación Técnica Simple</option>
+              <option value="lluvia-ideas">Lluvia de Ideas para Blog</option>
+            </select>
+            <button type="button" id="mezclar-ejemplos" class="mt-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition">Mezclar Ejemplos</button>
+          </div>
+          <div>
+            <label for="restricciones" class="block text-sm font-medium text-gray-700">Restricciones y Reglas</label>
+            <textarea id="restricciones" name="restricciones" rows="4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Límites (ej: 'Máx. 200 palabras'), qué NO hacer"></textarea>
+            <button type="button" id="refactorizar-restricciones" class="mt-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md transition">Refactorizar como Instrucciones Positivas</button>
+          </div>
+        </div>
+        <div class="mt-4 flex space-x-4">
+          <label class="flex items-center">
+            <input type="checkbox" id="markdown" name="markdown" class="mr-2"> Permitir Markdown
+          </label>
+          <label class="flex items-center">
+            <input type="checkbox" id="razonamiento-cot" name="razonamiento-cot" class="mr-2"> Activar Razonamiento Detallado (CoT)
+          </label>
+        </div>
+      </section>
+      <section class="mb-6">
+        <h2 class="text-xl font-semibold mb-4">Plantillas Predefinidas</h2>
+        <button type="button" id="guardar-plantilla" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition">Guardar Configuración Actual como Plantilla</button>
+      </section>
+      <button type="submit" id="generar-prompt" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md transition w-full">Generar Prompt</button>
+    </form>
+    <section class="preview bg-gray-200 p-6 rounded-lg mb-6">
+      <h2 class="text-xl font-semibold mb-4">Preview del Prompt Generado</h2>
+      <pre id="prompt-preview" class="bg-white p-4 rounded-md border border-gray-300">Preview del prompt generado</pre>
+      <div class="flex space-x-4 mt-4">
+        <button type="button" id="copiar-prompt" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition">Copiar</button>
+        <button type="button" id="exportar-prompt" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition">Exportar</button>
+        <button type="button" id="guardar-prompt" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition">Guardar Prompt</button>
+      </div>
+    </section>
+    <section class="history bg-gray-200 p-6 rounded-lg">
+      <h2 class="text-xl font-semibold mb-4">Historial de Prompts Generados</h2>
+      <input type="text" id="buscar-historial" class="block w-full p-2 border border-gray-300 rounded-md mb-4" placeholder="Buscar en el historial">
+      <ul id="historial-lista" class="list-disc pl-5"></ul>
+    </section>
+  </main>
+  <footer class="bg-blue-600 text-white p-6 text-center">
+    <!-- Logo -->
+    <img src="logo.jpg" alt="Logo de VPR5" class="mx-auto mb-4 h-16">
+    <!-- Texto de derechos reservados -->
+    <p>© 2025 VPR5 Todos los derechos reservados.</p>
+  </footer>
+  <script>
+    // Variables globales
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Función para actualizar fecha y hora
+      function actualizarFechaHora() {
+        const ahora = new Date();
+        const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric' };
+        const opcionesHora = { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' };
+        const fecha = ahora.toLocaleString('es-ES', opcionesFecha);
+        const hora = ahora.toLocaleString('es-ES', opcionesHora);
+        document.getElementById('fecha').textContent = fecha;
+        document.getElementById('hora').textContent = hora;
+      }
+      actualizarFechaHora();
+      setInterval(actualizarFechaHora, 60000);
+
+      // Toggle modo oscuro
+      const toggleModo = document.getElementById('toggle-modo');
+      if (toggleModo) {
+        toggleModo.addEventListener('click', function () {
+          document.body.classList.toggle('dark-mode');
+          this.textContent = document.body.classList.contains('dark-mode')
+            ? 'Activar Modo Claro'
+            : 'Activar Modo Oscuro';
+        });
+      }
+
+      // Mezclar ejemplos
+      document.getElementById('mezclar-ejemplos').addEventListener('click', function () {
+        const ejemplosTextarea = document.getElementById('ejemplos');
+        if (ejemplosTextarea.value) {
+          const ejemplos = ejemplosTextarea.value.split('\n\n');
+          ejemplos.sort(() => Math.random() - 0.5); // Aleatorizar
+          ejemplosTextarea.value = ejemplos.join('\n\n');
+        }
+      });
+
+      // Refactorizar restricciones
+      document.getElementById('refactorizar-restricciones').addEventListener('click', function () {
+        const restricciones = document.getElementById('restricciones').value;
+        const instruccionesPositivas = restricciones.replace(/no/gi, '').replace(/evitar/gi, 'asegurar');
+        alert(`Sugerencia: Reformula como "${instruccionesPositivas}"`);
+      });
+
+      // Generar prompt
+      const promptForm = document.getElementById('prompt-form');
+      if (promptForm) {
+        promptForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+
+          const modelo = document.getElementById('modelo-ia')?.value;
+          const tono = document.getElementById('tono-estilo')?.value;
+          const formato = document.getElementById('formato-salida')?.value;
+          const rol = document.getElementById('rol-contexto')?.value;
+          const tarea = document.getElementById('tarea-objetivo')?.value;
+          const parametros = document.getElementById('parametros-modelo')?.value;
+          const ejemplos = document.getElementById('ejemplos')?.value;
+          const restricciones = document.getElementById('restricciones')?.value;
+          const markdown = document.getElementById('markdown')?.checked;
+          const cot = document.getElementById('razonamiento-cot')?.checked;
+
+          // Validar campos clave
+          if (!rol || rol.length < 10) {
+            alert('Por favor, define un rol y contexto claro (mínimo 10 caracteres).');
+            return;
+          }
+          if (!tarea || tarea.length < 10) {
+            alert('Por favor, define una tarea específica y objetivo claro (mínimo 10 caracteres).');
+            return;
+          }
+
+          // Generar prompt optimizado
+          let prompt = '';
+          if (modelo === 'Grok') {
+            prompt = `Eres ${rol}. Realiza la siguiente tarea: ${tarea}. Usa un tono ${tono} y presenta la respuesta en formato ${formato}. `;
+          } else if (modelo === 'Copilot') {
+            prompt = `Actúa como ${rol}. Completa esta tarea: ${tarea}. Aplica un tono ${tono} y usa el formato ${formato}. Proporciona detalles técnicos si es relevante. `;
+          } else {
+            prompt = `Instrucciones para ${modelo}:
+Rol: ${rol}
+Tarea: ${tarea}
+Tono y Estilo: ${tono}
+Formato de Salida: ${formato}
+`;
+          }
+
+          if (ejemplos) prompt += `Ejemplos:
+${ejemplos}
+`;
+          if (restricciones) prompt += `Restricciones: ${restricciones}
+`;
+          if (parametros) prompt += `Parámetros del Modelo: ${parametros}
+`;
+          if (cot) prompt += `Razonamiento: Explica tu razonamiento paso a paso antes de proporcionar la respuesta final.
+`;
+          if (markdown) prompt += `Formato: Usa Markdown para estructurar la respuesta.
+`;
+
+          // Mostrar en el preview
+          const promptPreview = document.getElementById('prompt-preview');
+          if (promptPreview) {
+            promptPreview.textContent = prompt;
+          }
+
+          // Guardar en el historial
+          let historial = JSON.parse(localStorage.getItem('promptHistorial') || '[]');
+          historial.push({ fecha: new Date().toLocaleString('es-ES'), prompt });
+          localStorage.setItem('promptHistorial', JSON.stringify(historial));
+          actualizarHistorial();
+        });
+      }
+
+      // Cargar ejemplos rápidos
+      const cargarEjemplo = document.getElementById('cargar-ejemplo');
+      if (cargarEjemplo) {
+        cargarEjemplo.addEventListener('change', function () {
+          const ejemplos = {
+            'email-bienvenida': 'ENTRADA: Crear un email de bienvenida para un nuevo usuario.\nSALIDA: Asunto: ¡Bienvenido a nuestra plataforma!\nEstimado [Nombre],\nGracias por unirte. Aquí tienes un resumen de lo que puedes hacer...\n',
+            'resumen-articulo': 'ENTRADA: Resumir un artículo sobre IA.\nSALIDA: El artículo describe los avances en IA generativa, destacando modelos como Grok y su impacto en la automatización.\n',
+            'explicacion-tecnica': 'ENTRADA: Explicar blockchain en términos simples.\nSALIDA: Blockchain es una base de datos descentralizada que registra transacciones en bloques seguros, como un libro contable digital.\n',
+            'lluvia-ideas': 'ENTRADA: Ideas para un blog sobre tecnología.\nSALIDA: - Inteligencia Artificial en la vida cotidiana\n- El futuro de la realidad virtual\n- Ciberseguridad en 2025\n'
+          };
+          const ejemplosTextarea = document.getElementById('ejemplos');
+          if (ejemplosTextarea) {
+            ejemplosTextarea.value = ejemplos[this.value] || '';
+          }
+        });
+      }
+
+      // Copiar prompt
+      const copiarPrompt = document.getElementById('copiar-prompt');
+      if (copiarPrompt) {
+        copiarPrompt.addEventListener('click', function () {
+          const promptPreview = document.getElementById('prompt-preview');
+          if (promptPreview) {
+            navigator.clipboard.writeText(promptPreview.textContent);
+            alert('Prompt copiado al portapapeles');
+          }
+        });
+      }
+
+      // Exportar prompt
+      const exportarPrompt = document.getElementById('exportar-prompt');
+      if (exportarPrompt) {
+        exportarPrompt.addEventListener('click', function () {
+          const promptPreview = document.getElementById('prompt-preview');
+          if (promptPreview) {
+            const blob = new Blob([promptPreview.textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'prompt.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        });
+      }
+
+      // Guardar prompt
+      const guardarPrompt = document.getElementById('guardar-prompt');
+      if (guardarPrompt) {
+        guardarPrompt.addEventListener('click', function () {
+          const promptPreview = document.getElementById('prompt-preview');
+          if (promptPreview) {
+            let historial = JSON.parse(localStorage.getItem('promptHistorial') || '[]');
+            historial.push({ fecha: new Date().toLocaleString('es-ES'), prompt: promptPreview.textContent });
+            localStorage.setItem('promptHistorial', JSON.stringify(historial));
+            actualizarHistorial();
+            alert('Prompt guardado en el historial');
+          }
+        });
+      }
+
+      // Actualizar historial
+      function actualizarHistorial() {
+        const historial = JSON.parse(localStorage.getItem('promptHistorial') || '[]');
+        const lista = document.getElementById('historial-lista');
+        if (lista) {
+          lista.innerHTML = '';
+          historial.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = `${item.fecha}: ${item.prompt.substring(0, 50)}...`;
+            lista.appendChild(li);
+          });
+        }
+      }
+      actualizarHistorial();
+
+      // Filtrar historial
+      const buscarHistorial = document.getElementById('buscar-historial');
+      if (buscarHistorial) {
+        buscarHistorial.addEventListener('input', function () {
+          const filtro = this.value.toLowerCase();
+          const historial = JSON.parse(localStorage.getItem('promptHistorial') || '[]');
+          const lista = document.getElementById('historial-lista');
+          if (lista) {
+            lista.innerHTML = '';
+            historial
+              .filter(item => item.prompt.toLowerCase().includes(filtro))
+              .forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.fecha}: ${item.prompt.substring(0, 50)}...`;
+                lista.appendChild(li);
+              });
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
